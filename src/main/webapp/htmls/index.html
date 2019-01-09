@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>智能客服</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="../csses/confront.css">
+    <link rel="stylesheet" href="../csses/vcelm.css">
+    <link rel="stylesheet" href="../csses/vconsole.css">
+
+</head>
+<body>
+<div class="" id="container">
+    <div id="div_luyin">
+        <img id="luyin" src="../uploads/luyin.png" alt="">
+        <img id="luyinpng" src="../uploads/luyin.gif" alt="">
+    </div>
+    <div>
+        <div class="header">
+            <span style="float: left;padding-left:2%;">智能客服</span>
+            <span style="float: right;padding-right:2%;" id="time">1234556</span>
+        </div>
+    </div>
+    <div id="nei">
+        <ul id="xiaojin" class="content">
+            <li style="display:none">
+                <span></span>
+            </li>
+            <li>
+                <img src="../uploads/timg.jpg" class="imgleft">
+                <span class="spanleft">我是客服小豫，很高兴为您服务</span>
+            </li>
+        </ul>
+        <div id="ss" style="width:100%;height:70px;"></div>
+    </div>
+    <div class="footer clear">
+        <div class="d1" id="d1">
+            <div id="startRecords1">
+                <img id="img" src="../uploads/maikefeng.png" alt="">
+            </div>
+        </div>
+        <div class="d2" id="d2">
+            <input id="text" type="text" placeholder="说点什么吧...">
+        </div>
+        <div class="d3"><span id="fa">发送</span></div>
+    </div>
+    <audio preload="preload" controls="" id="audio" src="" style="display:none;"></audio>
+</div>
+<script src="https://wechat.sxhuzhen.com/kefu/js/jquery-1.10.2.min.js"></script>
+<script src="https://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+<script src="./zepto.min.js"></script>
+<script type="text/javascript" src="../js/CryptoJS.js"></script>
+<script src="https://cdn.bootcss.com/vConsole/3.2.0/vconsole.min.js"></script>
+<script>
+    $(function () {
+
+        var wxurl = '/wxRequest/getByUrl';
+        //var Appid = "wx7ffd297e337e9290";
+        var code = getUrlParam('code');
+        var local = window.location.href;
+
+
+        var appId = "d9ecfa9121495742f72b5e2c514fcbe5";
+        var secretKey = "f29d489ad4dc7567aa927990f6d262b1";
+
+        var arrIcon = ['./images/lang.jpg', '../uploads/timg.jpg'];
+        var iNow = -1;
+        var iNowS = 2;
+        var fa = document.getElementById('fa');
+        var text = document.getElementById('text');
+        var content = document.getElementById("xiaojin");
+        var img = content.getElementsByTagName('img');
+        var span = content.getElementsByTagName('span');
+
+        var d1 = document.getElementById("d1");
+        var urlflag = 1;
+        var sub = function (str, n) {
+            return str
+        }
+
+        if (window.location.href.indexOf("flag") >= 0) {
+            var objparam = parseUrl(window.location.href);
+            urlflag = objparam[0]['flag']
+        }
+        if (window.location.href.indexOf("from") >= 0) {
+            window.location.href = window.location.href.split("?")[0] + '?flag=' + urlflag
+        }
+
+        ajax_second(local);
+        function md5Encrypt(param) {
+            return CryptoJS.MD5(param).toString(CryptoJS.enc.Hex);
+        }
+
+        function getTimeStamp() {
+            var tmp = Date.parse(new Date()).toString();
+            tmp = tmp.substr(0, 10);
+            return tmp;
+        }
+
+        function getUrlParam(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
+            var r = window.location.search.substr(1).match(reg); //匹配目标参数
+            if (r != null) {
+                return unescape(r[2]);
+            }
+            ;
+            return null;
+        }
+
+        function initEvents() {
+            document.querySelector('#img').ontouchstart = function (e) {
+                e.preventDefault()
+            };
+
+            $("#text").click(function () {
+                var target = this;
+                setTimeout(function () {
+                    target.scrollIntoView(true);
+                }, 300)
+            })
+
+
+            $("#fa").click(function (e) {
+                //var unionid = sessionStorage.getItem("unionid");
+                var tv = $("#text").val();
+                if (tv == '') {
+                    alert('不能发送空消息')
+                } else {
+                    $(content).append($('<li><img src="../uploads/cutsomer.png" style="float:right;width:50px;height:50px;"><span class="spanright">' + tv + '</span></li>'));
+                    iNowS++;
+                    //span[iNowS].className += 'spanright';
+
+                    var prefix = "https://iask.qq.com/aics/open/ask?";
+                    var suffix = "appId=" + appId + "&channel=1&query=" + tv + "&time=" + getTimeStamp() + "&uuId=a";
+                    var param = secretKey + "&" + suffix;
+                    var sign = md5Encrypt(param);
+                    $.ajax({
+                        type: "GET",
+                        url: prefix + suffix + "&sign=" + sign,
+                        dataType: "json",
+                        success: function (data) {
+                            var voice1 = handlevoice(data, 1);
+                            var voice2 = handlevoice(data, 2, 'voicefalse');
+                            $(content).append($('<li><img src="' + arrIcon[1] + '"><span>' + voice2 + '</span></li>'));
+                            img[iNow + 1].className += 'imgleft';
+                            //span[iNowS + 1].className += 'spanleft';
+                            iNow++;
+                            iNowS++;
+                            $("#text").val("");
+                            scrollWindow()
+                        },
+                        error: function (err) {
+                        }
+                    })
+                }
+            });
+
+            $('#startRecord').ontouchstart = function () {
+                $("#audio").attr("src", "")
+            };
+            d1.ontouchstart = function (e) {
+            };
+
+            d1.ontouchend = function (e) {
+                var id1 = $(this).find("div").attr("id");
+                if (id1 === 'startRecords2') {
+                    $("#d2").empty().append("<input id='text' type='text' placeholder='说点什么吧...' />");
+                    $(this).empty().html(
+                        "<label for='text'><div id='startRecords1'><img id='img' src='../uploads/maikefeng.png'></div></label>");
+                    $("#fa").css("display", "block");
+                    $("#audio").attr("src", "");
+                    $("#text").focus();
+                    if (null !== document.getElementById("text")) {
+                    }
+
+                }
+                if (id1 === 'startRecords1') {
+                    //$(content).append(" 您点击了 startRecords1 ");
+                    document.activeElement.blur();
+                    $(this).empty().html("<div id='startRecords2'><img id='img' src='../uploads/jianpan.png'></div>");
+                    var html = "<button id='startRecord' >按住  说话</button>";
+                    $("#d2").empty().html(html);
+                    $("#fa").css("display", "none");
+                    wx.ready(function () {
+                        document.getElementById('audio').play();
+                        document.addEventListener("WeixinJSBridgeReady", function () {
+                            document.getElementById('audio').play()
+                        }, false);
+                        var voice = {
+                            localId: '',
+                            serverId: ''
+                        };
+                        var n = 1;
+                        document.querySelector('#startRecord').ontouchstart = function (e) {
+                            $("#audio").attr("src", "");
+                            e.preventDefault();
+                            wx.startRecord({
+                                success: function () {
+                                    $("#div_luyin").css("display", "block");
+                                    $("#img").attr("src", './images/jy1.png')
+                                },
+                                cancel: function () {
+                                    alert('用户拒绝授权录音')
+                                }
+                            })
+                        };
+                        document.querySelector('#startRecord').ontouchend = function () {
+                            //unionid = sessionStorage.getItem('unionid');
+                            wx.stopRecord({
+                                success: function (res) {
+                                    $("#div_luyin").css("display", "none");
+                                    voice.localId = res.localId;
+                                    n = 1;
+                                    $("#img").attr("src", '../uploads/maikefeng.png');
+                                    if (voice.localId === '') {
+                                        alert('请先点击左下角录音按钮录制一段声音');
+                                        return
+                                    }
+                                    wx.translateVoice({
+                                        localId: voice.localId,
+                                        complete: function (res) {
+                                            if (res.hasOwnProperty('translateResult')) {
+                                                $(content).append($('<li><img src="../uploads/cutsomer.png" style="float:right;width:50px;height:50px;"><span class="spanright">' + res.translateResult + '</span></li>'));
+                                                iNowS++;
+                                                //span[iNowS].className += 'spanright';
+                                                var prefix = "https://iask.qq.com/aics/open/ask?";
+                                                var suffix = "appId=" + appId + "&channel=1&query=" + res.translateResult + "&time=" + getTimeStamp() + "&uuId=a";
+                                                var param = secretKey + "&" + suffix;
+                                                var sign = md5Encrypt(param);
+                                                $.ajax({
+                                                    type: "GET",
+                                                    url: prefix + suffix + "&sign=" + sign,
+                                                    dataType: "json",
+                                                    success: function (data) {
+                                                        var voice2 = handlevoice(data, 2, 'voicefalse');
+                                                        $(content).append($('<li><img src="' + arrIcon[1] + '"><span>' + voice2 + '</span></li>'));
+                                                        img[iNow + 1].className += 'imgleft';
+                                                        //span[iNowS + 1].className += 'spanleft';
+                                                        iNow++;
+                                                        iNowS++;
+                                                        $("#text").val("");
+                                                        scrollWindow()
+                                                    },
+                                                    error: function (err) {
+                                                        console.log(err)
+                                                    }
+                                                })
+                                            } else {
+                                                console.log('无法识别')
+                                            }
+                                        }
+                                    })
+                                },
+                                fail: function (res) {
+                                    console.log(JSON.stringify(res))
+                                }
+                            })
+                        };
+                        wx.onVoiceRecordEnd({
+                            complete: function (res) {
+                                voice.localId = res.localId;
+                                alert('录音时间已超过一分钟')
+                            }
+                        })
+                    });
+                    wx.error(function (res) {
+                        console.log(res.errMsg)
+                    })
+                }
+            };
+
+
+        }
+
+        //请求微信后台，拿到signature，主要是为了获取权限
+        function ajax_second(h) {
+            console.log("==>获取票据");
+            $.ajax({
+                type: "GET",
+                url: wxurl + "?local_href=" + h,
+                data: {},
+                dataType: "json",
+                success: function (data) {
+                    wx.config({
+                        debug: false,
+                        appId: data['appId'],
+                        timestamp: data['timestamp'],
+                        nonceStr: data['nonceStr'],
+                        signature: data['signature'],
+                        jsApiList: ['translateVoice', 'startRecord', 'stopRecord', 'playVoice', 'pauseVoice', 'stopVoice',
+                            'uploadVoice', 'downloadVoice'
+                        ]
+                    });
+                    console.log("==>获取票据成功");
+                    initEvents();
+                }
+            });
+        }
+
+        //处理语音
+        function handlevoice(data, flag, voicef = "voicefalse") {
+            if (data['data']['prefix']) {
+                if (data['data']['answer'] instanceof Array) {
+                    var answer1 = '';
+                    var answer2 = '';
+                    for (var i in data['data']['answer']) {
+                        var t1 = data['data']['answer'][i];
+                        if (t1.indexOf("<a>") < 0) {
+                            t2 = "<a onclick=\"hr('" + t1 + "','" + voicef +
+                                "')\" style='color: rgb(73,169,238);text-decoration: underline;'>" + t1 + "</a>"
+                        }
+                        answer2 = answer2 + t2 + '<br/>';
+                        answer1 = answer1 + t1 + ' ,'
+                    }
+                    var voice1 = data['data']['prefix'] + ', ' + answer1;
+                    var voice2 = data['data']['prefix'] + '<br/>' + answer2
+                } else {
+                    var voice1 = data['data']['prefix'] + ', ' + data['data']['answer'];
+                    var voice2 = data['data']['prefix'] + '<br/>' + data['data']['answer']
+                }
+            } else {
+                if (data['data']['answer'] instanceof Array) {
+                    var answer1 = '';
+                    var answer2 = '';
+                    for (var i in data['data']['answer']) {
+                        var t1 = data['data']['answer'][i];
+                        if (t1.indexOf("<a>") < 0) {
+                            t2 = "<a onclick=\"hr('" + t1 + "','" + voicef +
+                                "')\" style='color: rgb(73,169,238);text-decoration: underline;'>" + t1 + "</a>"
+                        }
+                        answer1 = answer1 + t1 + ' ,';
+                        answer2 = answer2 + t2 + '<br/>'
+                    }
+                    var voice1 = data['data']['prefix'] + ', ' + answer1;
+                    var voice2 = data['data']['prefix'] + '<br/>' + answer2
+                } else {
+                    var voice1 = data['data']['prefix'] + ' ,' + data['data']['answer'];
+                    var voice2 = data['data']['prefix'] + data['data']['answer']
+                }
+            }
+            voice = flag == 1 ? voice1 : voice2;
+            return voice
+        };
+
+        function parseUrl(url) {
+            var result = [];
+            var query = url.split("?")[1];
+            var queryArr = query.split("&");
+            queryArr.forEach(function (item) {
+                var obj = {};
+                var value = item.split("=")[1];
+                var key = item.split("=")[0];
+                obj[key] = value;
+                result.push(obj)
+            });
+            return result
+        };
+
+
+        function scrollWindow() {
+            scroll(0, 10000000000)
+        }
+
+        function delHtmlTag(str) {
+            return str.replace(/<[^>]+>/g, "")
+        }
+    });
+</script>
+</body>
+</html>
